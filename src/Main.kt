@@ -6,20 +6,22 @@ import java.net.Socket
 import java.net.URL
 
 fun main() {
-//    val socket = Socket("monta.if.its.ac.id", 80)
-    val socket = Socket("pbs.twimg.com", 80)
+    "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
+    "http://monta.if.its.ac.id"
+    "http://monkp.if.its.ac.id"
+    val targetHost = "monta.if.its.ac.id"
+    val targetUrl= ""
+    val targetUri = "https://$targetHost/$targetUrl"
+
+    val socket = Socket(targetHost, 80)
 
     val bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
-//    val bufferIn = BufferedInputStream(socket.getInputStream())
     val bufferOut = BufferedOutputStream(socket.getOutputStream())
 
-    val targetHost = "pbs.twimg.com"
-    val targetUri = "media/FMfbrkzaMAQJnaL?format=jpg&name=large"
-    val targetUrl = "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
-    "https://twitter.com/yuqipictures/status/1497406948266110978/photo/1"
-    println("asking for $targetUrl")
+
+    println("asking for $targetUri")
     bufferOut.write((
-            "GET /$targetUri HTTP/1.1\r\n" +
+            "GET /$targetUrl HTTP/1.1\r\n" +
             "Host: $targetHost\r\n\r\n"
             ).toByteArray())
     bufferOut.flush()
@@ -31,9 +33,6 @@ fun main() {
         println("status: $status")
         println("contentType: $contentType")
     }
-    println(httpResult.code)
-    println(httpResult.status)
-    println(httpResult.contentType)
 
     socket.close()
 }

@@ -3,5 +3,5 @@ data class HttpResult(
     val status: String,
     val refreshUrl: String = "",
     val contentType: String = "",
-    val content: Any = ""
+    val content: Any = "",
 )
