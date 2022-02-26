@@ -21,13 +21,8 @@ object HttpHeaderParser {
 
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
-        val contentType = with(response.substringAfter("Content-Type: ")) {
-            if (this == response) {
-                ""
-            } else {
-                this.substringBefore("\n")
-            }
-        }
+        val contentType = parseContentType(response)
+        var redirectLink = ""
 
 
         return HttpResult(
@@ -60,6 +55,12 @@ object HttpHeaderParser {
 
     private fun parseCode(header: String): Int {
         return header.split(" ")[1].toInt()
+    }
+
+    private fun parseContentType(header: String): String {
+        return header
+            .substringAfter("Content-Type: ", "")
+            .substringBefore("\n", "")
     }
 
     private fun parseStatus(header: String): String {
