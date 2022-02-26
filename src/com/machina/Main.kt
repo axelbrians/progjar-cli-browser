@@ -5,6 +5,7 @@ import java.io.BufferedReader
 import java.io.DataInputStream
 import java.io.InputStreamReader
 import java.net.Socket
+import java.net.URLConnection
 import java.util.*
 
 fun main() {
@@ -16,7 +17,7 @@ fun main() {
 
 
     val sc = Scanner(System.`in`)
-    val index = 3
+    val index = 1
 
     val targetHostList = listOf(
         "monkp.if.its.ac.id",
@@ -79,6 +80,8 @@ fun main() {
         println("code: $code")
         println("status: $status")
         println("contentType: $contentType")
+        println("contentLength $contentLength")
+
     }
 
 }

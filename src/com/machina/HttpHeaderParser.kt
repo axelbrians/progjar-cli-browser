@@ -5,6 +5,8 @@ import java.io.BufferedReader
 import java.io.DataInputStream
 import java.io.InputStreamReader
 import java.net.Socket
+import java.util.*
+
 object HttpHeaderParser {
 
     fun parseHeader(buffer: DataInputStream): HttpResult {
@@ -15,13 +17,12 @@ object HttpHeaderParser {
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-            if (lineOfString.isBlank()) {
-                break
-            }
-
             println(lineOfString)
             response += lineOfString + "\n"
 
+            if (lineOfString.isBlank()) {
+                break
+            }
 
             if(lineOfString.contains("WWW-Authenticate")) {
                 basicAuth = 1
@@ -36,27 +37,7 @@ object HttpHeaderParser {
         val contentLength = parseContentLength(response)
         val httpUrl = parseHttpUrl(response)
 
-
-        val byteArraySize = 1024
-        val byteArray = ByteArray(byteArraySize)
-        var byteRead = 0
-        if(code < 400) {
-            var readStatus = buffer.read(byteArray)
-            while (readStatus != -1) {
-                byteRead += readStatus
-                println(byteRead)
-                response += String(byteArray)
-                if (contentLength >= byteRead) {
-                    break
-                }
-
-                readStatus = buffer.read(byteArray)
-            }
-        }
-
-
-
-        return if (httpUrl != null) {
+        if (httpUrl != null) {
             val socket = Socket(httpUrl.host, 80)
 
             val bufferedReader = DataInputStream(socket.getInputStream())
@@ -64,19 +45,60 @@ object HttpHeaderParser {
 
             println("redirecting to ${httpUrl.protocol}://${httpUrl.host}/${httpUrl.url}\n\n")
             bufferOut.write((
-                "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
-                "Host: ${httpUrl.host}\r\n\r\n"
-            ).toByteArray())
+                    "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
+                            "Host: ${httpUrl.host}\r\n\r\n"
+                    ).toByteArray())
             bufferOut.flush()
 
             val header = parseHeader(bufferedReader)
             socket.close()
-            header
+            return header
         } else {
-            HttpResult(
+            val byteArraySize = 1024
+            val byteArray = ByteArray(byteArraySize)
+            var byteRead = 0
+            if(code < 400) {
+                if (contentType == "text/html" && contentLength > 0) {
+                    var readStatus = buffer.read(byteArray)
+                    while (true) {
+                        byteRead += readStatus
+                        if (readStatus > 0) {
+                            response += String(byteArray.sliceArray(0 until readStatus))
+                        }
+                        if (byteRead >= contentLength || readStatus < 0) {
+                            break
+                        }
+                        readStatus = buffer.read(byteArray)
+                    }
+                } else if (contentType == "text/html") {
+                    while (lineOfString != null) {
+                        lineOfString = buffer.readLine()
+                        if (lineOfString != null) {
+                            response += lineOfString + "\n"
+                        }
+                        if (lineOfString.contains("</html>")) {
+                            break
+                        }
+                    }
+                } else {
+                    var readStatus = buffer.read(byteArray)
+                    while (readStatus != -1) {
+                        byteRead += readStatus
+                        response += String(byteArray)
+                        if (contentLength >= byteRead) {
+                            break
+                        }
+
+                        readStatus = buffer.read(byteArray)
+                    }
+                }
+            }
+            println(response)
+            return HttpResult(
                 code = code,
                 status = status,
                 contentType = contentType,
+                contentLength = contentLength,
                 content = response,
                 basicAuth = basicAuth)
         }
@@ -116,9 +138,9 @@ object HttpHeaderParser {
         val redirectUrl: String = temp.substringAfter("/", "").substringBefore("\n")
 
 
-        println("redirectProtocol $httpProtocol")
-        println("redirectHost $redirectHost")
-        println("redirectUrl $redirectUrl")
+//        println("redirectProtocol $httpProtocol")
+//        println("redirectHost $redirectHost")
+//        println("redirectUrl $redirectUrl")
 
         return if (redirectHost.isNotBlank()) {
             HttpUrl(
