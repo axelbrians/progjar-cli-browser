@@ -9,19 +9,28 @@ fun main() {
     "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
     "http://monta.if.its.ac.id"
     "http://monkp.if.its.ac.id"
-    val targetHost = "pbs.twimg.com"
-    val targetUrl= "media/FMfbrkzaMAQJnaL?format=jpg&name=large"
-    val targetUri = "https://$targetHost/$targetUrl"
 
-    val socket = Socket(targetHost, 80)
+    val targetHostList = listOf(
+        "monkp.if.its.ac.id",
+        "monta.if.its.ac.id",
+        "pbs.twimg.com"
+    )
+
+    val targetUrlList = listOf(
+        "",
+        "",
+        "media/FMfbrkzaMAQJnaL?format=jpg&name=large"
+    )
+
+    val socket = Socket(targetHostList[0], 80)
 
     val bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
     val bufferOut = BufferedOutputStream(socket.getOutputStream())
 
-    println("asking for $targetUri")
+    println("asking for https://${targetHostList[0]}/${targetUrlList[0]}")
     bufferOut.write((
-            "GET /$targetUrl HTTP/1.1\r\n" +
-            "Host: $targetHost\r\n\r\n"
+            "GET /${targetUrlList[0]} HTTP/1.1\r\n" +
+            "Host: ${targetHostList[0]}\r\n\r\n"
             ).toByteArray())
     bufferOut.flush()
 
