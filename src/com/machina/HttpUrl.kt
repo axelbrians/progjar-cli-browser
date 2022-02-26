@@ -1,3 +1,5 @@
+package com.machina
+
 data class HttpUrl(
     val protocol: String = "http",
     val host: String = "",

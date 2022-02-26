@@ -1,3 +1,5 @@
+package com.machina
+
 data class HttpResult(
     val code: Int,
     val status: String,

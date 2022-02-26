@@ -1,9 +1,9 @@
-import java.io.BufferedInputStream
+package com.machina
+
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket
-
 object HttpHeaderParser {
 
     fun parseHeader(buffer: BufferedReader): HttpResult {
@@ -14,9 +14,10 @@ object HttpHeaderParser {
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-            if(lineOfString == null) {
+            if (lineOfString.isBlank()) {
                 break
             }
+
             println(lineOfString)
             response += lineOfString + "\n"
 
@@ -25,9 +26,6 @@ object HttpHeaderParser {
                 basicAuth = 1
             }
 
-            if (lineOfString.isBlank()) {
-                break
-            }
         }
 //        println("read header complete")
 
@@ -39,13 +37,11 @@ object HttpHeaderParser {
             while (lineOfString != null) {
                 lineOfString = buffer.readLine()
                 if (lineOfString == null) {
-                    println("test")
+//                    println("test")
                     break
                 }
                 println(lineOfString)
                 response += lineOfString + "\n"
-
-
             }
         }
 
@@ -78,7 +74,7 @@ object HttpHeaderParser {
         }
     }
 
-//    fun parseHeader(buffer: BufferedInputStream): HttpResult {
+//    fun parseHeader(buffer: BufferedInputStream): com.main.machina.HttpResult {
 //        println("reading bytes")
 //
 //        var response = ""
@@ -92,7 +88,7 @@ object HttpHeaderParser {
 //
 //        val code = parseCode(response.substringBefore("\n"))
 //        val status = parseStatus(response.substringBefore("\n"))
-//        return HttpResult(
+//        return com.main.machina.HttpResult(
 //            code = code,
 //            status = status,
 //            content = response)
@@ -110,29 +106,20 @@ object HttpHeaderParser {
     }
 
     private fun parseHttpUrl(header: String): HttpUrl? {
-        var httpProtocol = ""
-        var rawUrl = ""
-        var redirectUrl = ""
-        var redirectHost = ""
-        val parseRawUrl = {
-            httpProtocol = rawUrl.substringBefore(":")
-
-            val temp = rawUrl.substringAfter("://", "")
-            redirectHost = temp.substringBefore("/")
-            redirectUrl = temp.substringAfter("/", "").substringBefore("\n")
-        }
-
-        if (header.substringAfter("Refresh: ", "").isNotBlank()) {
-            rawUrl = header
-                .substringAfter("Refresh: ")
+        val rawUrl = if (header.substringAfter("Refresh: ", "").isNotBlank()) {
+            header.substringAfter("Refresh: ")
                 .substringBefore("\n", "")
         } else if (header.substringAfter("Location: ", "").isNotBlank()) {
-            rawUrl = header
-                .substringAfter("Location: ")
+            header.substringAfter("Location: ")
                 .substringBefore("\n", "")
+        } else {
+            ""
         }
 
-        parseRawUrl()
+        val temp = rawUrl.substringAfter("://", "")
+        val httpProtocol: String = rawUrl.substringBefore(":")
+        val redirectHost: String = temp.substringBefore("/")
+        val redirectUrl: String = temp.substringAfter("/", "").substringBefore("\n")
 
 
         println("redirectProtocol $httpProtocol")
