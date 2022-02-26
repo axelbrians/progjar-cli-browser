@@ -41,10 +41,12 @@ object HttpHeaderParser {
 
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
-//        val contentType = response.find { "Content-Type" }
+        val contentType = response.substringAfter("Content-Type: ").substringBefore("\n")
+
         return HttpResult(
             code = code,
             status = status,
+            contentType = contentType,
             content = response)
     }
 
@@ -62,8 +64,6 @@ object HttpHeaderParser {
 
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
-        println(code)
-        println(status)
         return HttpResult(
             code = code,
             status = status,

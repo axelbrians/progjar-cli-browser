@@ -25,8 +25,15 @@ fun main() {
     bufferOut.flush()
 
     val httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+
+    with(httpResult) {
+        println("code: $code")
+        println("status: $status")
+        println("contentType: $contentType")
+    }
     println(httpResult.code)
     println(httpResult.status)
+    println(httpResult.contentType)
 
     socket.close()
 }
