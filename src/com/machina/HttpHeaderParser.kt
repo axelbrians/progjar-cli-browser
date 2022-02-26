@@ -2,11 +2,12 @@ package com.machina
 
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
+import java.io.DataInputStream
 import java.io.InputStreamReader
 import java.net.Socket
 object HttpHeaderParser {
 
-    fun parseHeader(buffer: BufferedReader): HttpResult {
+    fun parseHeader(buffer: DataInputStream): HttpResult {
 //        println("reading bytes")
 
         var lineOfString: String? = ""
@@ -32,26 +33,33 @@ object HttpHeaderParser {
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
         val contentType = parseContentType(response)
+        val contentLength = parseContentLength(response)
+        val httpUrl = parseHttpUrl(response)
 
+
+        val byteArraySize = 1024
+        val byteArray = ByteArray(byteArraySize)
+        var byteRead = 0
         if(code < 400) {
-            while (lineOfString != null) {
-                lineOfString = buffer.readLine()
-                if (lineOfString == null) {
-//                    println("test")
+            var readStatus = buffer.read(byteArray)
+            while (readStatus != -1) {
+                byteRead += readStatus
+                println(byteRead)
+                response += String(byteArray)
+                if (contentLength >= byteRead) {
                     break
                 }
-                println(lineOfString)
-                response += lineOfString + "\n"
+
+                readStatus = buffer.read(byteArray)
             }
         }
 
 
-        val httpUrl = parseHttpUrl(response)
 
         return if (httpUrl != null) {
             val socket = Socket(httpUrl.host, 80)
 
-            val bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
+            val bufferedReader = DataInputStream(socket.getInputStream())
             val bufferOut = BufferedOutputStream(socket.getOutputStream())
 
             println("redirecting to ${httpUrl.protocol}://${httpUrl.host}/${httpUrl.url}\n\n")
@@ -74,27 +82,6 @@ object HttpHeaderParser {
         }
     }
 
-//    fun parseHeader(buffer: BufferedInputStream): com.main.machina.HttpResult {
-//        println("reading bytes")
-//
-//        var response = ""
-//        var byte = buffer.readNBytes(100)
-//        while (byte != null) {
-////            println(String(byte))
-//            byte = buffer.readNBytes(100)
-//            response += String(byte)
-//        }
-//        println("read buffer complete")
-//
-//        val code = parseCode(response.substringBefore("\n"))
-//        val status = parseStatus(response.substringBefore("\n"))
-//        return com.main.machina.HttpResult(
-//            code = code,
-//            status = status,
-//            content = response)
-//    }
-
-
     private fun parseCode(header: String): Int {
         return header.split(" ")[1].toInt()
     }
@@ -103,6 +90,13 @@ object HttpHeaderParser {
         return header
             .substringAfter("Content-Type: ", "")
             .substringBefore("\n", "")
+    }
+
+    private fun parseContentLength(header: String): Int {
+        return header
+            .substringAfter("Content-Length: ", "")
+            .substringBefore("\n", "0")
+            .toInt()
     }
 
     private fun parseHttpUrl(header: String): HttpUrl? {

@@ -2,6 +2,7 @@ package com.machina
 
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
+import java.io.DataInputStream
 import java.io.InputStreamReader
 import java.net.Socket
 import java.util.*
@@ -15,7 +16,7 @@ fun main() {
 
 
     val sc = Scanner(System.`in`)
-    val index = 4
+    val index = 3
 
     val targetHostList = listOf(
         "monkp.if.its.ac.id",
@@ -34,7 +35,8 @@ fun main() {
     )
 
     var socket = Socket(targetHostList[index], 80)
-    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
+//    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
+    var dataInput = DataInputStream(socket.getInputStream())
     var bufferOut = BufferedOutputStream(socket.getOutputStream())
 
     println("asking for https://${targetHostList[index]}/${targetUrlList[index]}")
@@ -44,13 +46,15 @@ fun main() {
             ).toByteArray())
     bufferOut.flush()
 
-    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+//    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+    var httpResult = HttpHeaderParser.parseHeader(dataInput)
 
     socket.close()
 
     if(httpResult.basicAuth == 1) {
         socket = Socket(targetHostList[index], 80)
-        bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
+        dataInput = DataInputStream(socket.getInputStream())
+//        bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
         bufferOut = BufferedOutputStream(socket.getOutputStream())
         print("Enter username: ")
         val username = sc.nextLine()
@@ -65,7 +69,8 @@ fun main() {
                 ).toByteArray())
         bufferOut.flush()
 
-        httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+        httpResult = HttpHeaderParser.parseHeader(dataInput)
+//        httpResult = HttpHeaderParser.parseHeader(bufferedReader)
 
         socket.close()
     }
