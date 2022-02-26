@@ -3,4 +3,5 @@ data class HttpResult(
     val status: String,
     val contentType: String = "",
     val content: Any = "",
+    val basicAuth: Int
 )

@@ -11,10 +11,19 @@ object HttpHeaderParser {
 
         var lineOfString: String? = ""
         var response = ""
+        var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-//            println(lineOfString)
+            if(lineOfString == null) {
+                break
+            }
+            println(lineOfString)
             response += lineOfString + "\n"
+
+
+            if(lineOfString.contains("WWW-Authenticate")) {
+                basicAuth = 1
+            }
 
             if (lineOfString.isBlank()) {
                 break
@@ -25,6 +34,20 @@ object HttpHeaderParser {
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
         val contentType = parseContentType(response)
+
+        if(code < 400) {
+            while (lineOfString != null) {
+                lineOfString = buffer.readLine()
+                if (lineOfString == null) {
+                    println("test")
+                    break
+                }
+                println(lineOfString)
+                response += lineOfString + "\n"
+
+
+            }
+        }
 
 
         val httpUrl = parseHttpUrl(response)
@@ -50,29 +73,30 @@ object HttpHeaderParser {
                 code = code,
                 status = status,
                 contentType = contentType,
-                content = response)
+                content = response,
+                basicAuth = basicAuth)
         }
     }
 
-    fun parseHeader(buffer: BufferedInputStream): HttpResult {
-        println("reading bytes")
-
-        var response = ""
-        var byte = buffer.readNBytes(100)
-        while (byte != null) {
-//            println(String(byte))
-            byte = buffer.readNBytes(100)
-            response += String(byte)
-        }
-        println("read buffer complete")
-
-        val code = parseCode(response.substringBefore("\n"))
-        val status = parseStatus(response.substringBefore("\n"))
-        return HttpResult(
-            code = code,
-            status = status,
-            content = response)
-    }
+//    fun parseHeader(buffer: BufferedInputStream): HttpResult {
+//        println("reading bytes")
+//
+//        var response = ""
+//        var byte = buffer.readNBytes(100)
+//        while (byte != null) {
+////            println(String(byte))
+//            byte = buffer.readNBytes(100)
+//            response += String(byte)
+//        }
+//        println("read buffer complete")
+//
+//        val code = parseCode(response.substringBefore("\n"))
+//        val status = parseStatus(response.substringBefore("\n"))
+//        return HttpResult(
+//            code = code,
+//            status = status,
+//            content = response)
+//    }
 
 
     private fun parseCode(header: String): Int {
