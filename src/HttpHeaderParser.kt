@@ -21,7 +21,13 @@ object HttpHeaderParser {
 
         val code = parseCode(response.substringBefore("\n"))
         val status = parseStatus(response.substringBefore("\n"))
-        val contentType = response.substringAfter("Content-Type: ").substringBefore("\n")
+        val contentType = with(response.substringAfter("Content-Type: ")) {
+            if (this == response) {
+                ""
+            } else {
+                this.substringBefore("\n")
+            }
+        }
 
 
         return HttpResult(

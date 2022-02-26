@@ -9,15 +9,14 @@ fun main() {
     "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
     "http://monta.if.its.ac.id"
     "http://monkp.if.its.ac.id"
-    val targetHost = "monta.if.its.ac.id"
-    val targetUrl= ""
+    val targetHost = "pbs.twimg.com"
+    val targetUrl= "media/FMfbrkzaMAQJnaL?format=jpg&name=large"
     val targetUri = "https://$targetHost/$targetUrl"
 
     val socket = Socket(targetHost, 80)
 
     val bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
     val bufferOut = BufferedOutputStream(socket.getOutputStream())
-
 
     println("asking for $targetUri")
     bufferOut.write((
