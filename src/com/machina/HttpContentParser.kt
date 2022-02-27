@@ -1,5 +1,7 @@
 package com.machina
 
+import java.util.regex.Pattern
+
 object HttpContentParser {
     fun parseBody(httpResult: HttpResult): HttpContent {
         val content = httpResult.content.toString()
@@ -23,20 +25,46 @@ object HttpContentParser {
         processedContent = removeAllTags(processedContent)
         processedContent = removeSpaces(processedContent)
         processedContent = removeNoContentLink(processedContent)
+        processedContent = changeATagtoNewline(processedContent)
 
         val rawATags: MutableList<String> = ArrayList()
 
-        regex = "<a[^>]*>[\\s\\S]*?</a>".toRegex()
-        var sequenceMatchedString : Sequence<MatchResult> = regex.findAll(processedContent, 0)
-        if (sequenceMatchedString != null) {
-            sequenceMatchedString.forEach()
-            {
-                    matchResult -> rawATags.add(matchResult.value)
-            }
-        }
+//        regex = "<a[^>]*>[\\s\\S]*?</a>".toRegex()
+//
+//        var sequenceMatchedString : Sequence<MatchResult> = regex.findAll(processedContent, 0)
+//        if (sequenceMatchedString != null) {
+//            sequenceMatchedString.forEach()
+//            {
+//                    matchResult -> rawATags.add(matchResult.value)
+//            }
+//        }
 
         val clickableLinks: MutableList<String> = ArrayList()
-        clickableLinks.add("")
+
+        val patternTag = Pattern.compile("(?i)<a([^>]+)>(.*)")
+        val patternLink = Pattern.compile("\\s*(?i)href\\s*=\\s*(\"([^\"]*\")|'[^']*'|([^'\">\\s]+))")
+
+        val matcherTag = patternTag.matcher(processedContent)
+
+        while (matcherTag.find()) {
+            val href = matcherTag.group(1)
+            val linkText = matcherTag.group(2)
+
+            val matcherLink = patternLink.matcher(href)
+            if (matcherLink.find()) {
+                val link = matcherLink.group(1)
+                clickableLinks.add("$linkText -> $link")
+            } else {
+                clickableLinks.add(linkText)
+            }
+
+        }
+
+        for (link in clickableLinks) {
+            regex = "<a[^>]*>[\\s\\S].*".toRegex()
+            processedContent = regex.replaceFirst(processedContent, link)
+        }
+
         println(title)
         println(processedContent)
         return HttpContent(
@@ -73,6 +101,11 @@ object HttpContentParser {
     private fun removeNoContentLink(content: String): String {
         val regex = "<a[^>]*></a>".toRegex()
         return regex.replace(content, "")
+    }
+
+    private fun changeATagtoNewline(content: String): String {
+        val regex = "</a>".toRegex()
+        return regex.replace(content, "\n")
     }
 
     private fun removeEntities(content: String): String {
