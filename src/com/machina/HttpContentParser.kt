@@ -3,9 +3,10 @@ package com.machina
 import java.util.regex.Pattern
 
 object HttpContentParser {
-    fun parseBody(httpResult: HttpResult): HttpContent {
-        val content = httpResult.content.toString()
-        var processedContent = removeEntities(removeComment(removeLink(removeScript(content))))
+
+    fun parseBody(httpContent: String): HttpContent {
+        val content = removeScript(httpContent)
+        var processedContent = removeEntities(removeComment(removeLink(content)))
 
         var title = ""
 

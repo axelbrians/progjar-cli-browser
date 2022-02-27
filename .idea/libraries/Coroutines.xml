@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Coroutines">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/annotations-13.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/kotlin-stdlib-1.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/kotlin-stdlib-jdk7-1.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/kotlin-stdlib-jdk8-1.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/kotlinx-coroutines-core-jvm-1.6.0-native-mt.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

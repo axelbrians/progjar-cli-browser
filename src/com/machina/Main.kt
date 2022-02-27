@@ -1,5 +1,6 @@
 package com.machina
 
+import com.machina.downloader.FileDownloader
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataInputStream
@@ -11,29 +12,39 @@ import java.util.*
 fun main() {
     "http://monta.if.its.ac.id"
     "http://monkp.if.its.ac.id"
-    "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
+    "https://pbs.twimg.com/media/FMkTSGgXEAUmxF7?format=jpg&name=4096x4096"
     "http://basic.ichimarumaru.tech" + "kuncimenujulautan:tQKEJFbgNGC1NCZlWAOjhyCOm6o3xEbPkJhTciZN"
     "https://cdn.discordapp.com/attachments/862018186685579334/947118411509538886/SPOILER_VP3.jpg"
-
+    "https://releases.ubuntu.com/20.04.4/ubuntu-20.04.4-desktop-amd64.iso"
+    "https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/x86_64/alpine-standard-3.15.0-x86_64.iso"
 
     val sc = Scanner(System.`in`)
-    val index = 1
+    val index = 5
 
     val targetHostList = listOf(
         "monkp.if.its.ac.id",
         "monta.if.its.ac.id",
         "pbs.twimg.com",
         "basic.ichimarumaru.tech",
-        "cdn.discordapp.com"
+        "cdn.discordapp.com",
+        "releases.ubuntu.com",
     )
 
     val targetUrlList = listOf(
         "",
         "",
-        "media/FMfbrkzaMAQJnaL?format=jpg&name=large",
+        "media/FMkTSGgXEAUmxF7?format=jpg&name=4096x4096",
         "",
-        "attachments/862018186685579334/947118411509538886/SPOILER_VP3.jpg"
+        "attachments/862018186685579334/947118411509538886/SPOILER_VP3.jpg",
+        "20.04.4/ubuntu-20.04.4-desktop-amd64.iso"
     )
+
+    // To test parallel download with FileDownlaoder
+    val downloader = FileDownloader()
+    downloader.downloadAll(listOf())
+
+    return Unit
+    // Comment until here for normal behaviour
 
     var socket = Socket(targetHostList[index], 80)
 //    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
@@ -79,13 +90,12 @@ fun main() {
 //    println("header:\n" + httpResult.contentHeader)
 //    println("content:\n" + httpResult.content)
 
-    var httpContent = HttpContentParser.parseBody(httpResult)
-
     with(httpResult) {
         println("code: $code")
         println("status: $status")
         println("contentType: $contentType")
         println("contentLength $contentLength")
+        println("content $content")
 
     }
 

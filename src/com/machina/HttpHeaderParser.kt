@@ -1,14 +1,14 @@
 package com.machina
 
+import com.machina.downloader.FileDownloader
 import java.io.BufferedOutputStream
-import java.io.BufferedReader
 import java.io.DataInputStream
-import java.io.InputStreamReader
+import java.io.File
 import java.net.Socket
-import java.util.*
 
 object HttpHeaderParser {
 
+    private val fileDownloader = FileDownloader()
     private var prevRedirect = ""
 
     fun parseHeader(buffer: DataInputStream): HttpResult {
@@ -19,7 +19,7 @@ object HttpHeaderParser {
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-//            println(lineOfString)
+            println(lineOfString)
             contentHeader += lineOfString + "\n"
 
             if (lineOfString.isBlank()) {
@@ -33,6 +33,7 @@ object HttpHeaderParser {
         }
 //        println("read header complete")
 
+        var result: Any = ""
         val code = parseCode(contentHeader.substringBefore("\n"))
         val status = parseStatus(contentHeader.substringBefore("\n"))
         val contentType = parseContentType(contentHeader)
@@ -62,42 +63,14 @@ object HttpHeaderParser {
             socket.close()
             return header
         } else {
-            val byteArraySize = 1024
-            val byteArray = ByteArray(byteArraySize)
-            var byteRead = 0
-            if(code < 400) {
-                if (contentType == "text/html" && contentLength > 0) {
-                    var readStatus = buffer.read(byteArray)
-                    while (true) {
-                        byteRead += readStatus
-                        if (readStatus > 0) {
-                            response += String(byteArray.sliceArray(0 until readStatus))
-                        }
-                        if (byteRead >= contentLength || readStatus < 0) {
-                            break
-                        }
-                        readStatus = buffer.read(byteArray)
+            if(code in 200..299) {
+                when (contentType) {
+                    "text/html" -> {
+                        response += parseContent<HttpContent>(buffer, contentType, contentLength)
+                        result = response
                     }
-                } else if (contentType == "text/html") {
-                    while (lineOfString != null) {
-                        lineOfString = buffer.readLine()
-                        if (lineOfString != null) {
-                            response += lineOfString + "\n"
-                        }
-                        if (lineOfString.contains("</html>")) {
-                            break
-                        }
-                    }
-                } else {
-                    var readStatus = buffer.read(byteArray)
-                    while (readStatus != -1) {
-                        byteRead += readStatus
-                        response += String(byteArray)
-                        if (contentLength >= byteRead) {
-                            break
-                        }
-
-                        readStatus = buffer.read(byteArray)
+                    else -> {
+                        result = parseContent<File>(buffer, contentType, contentLength)
                     }
                 }
             }
@@ -108,7 +81,7 @@ object HttpHeaderParser {
                 contentType = contentType,
                 contentLength = contentLength,
                 contentHeader = contentHeader,
-                content = response,
+                content = result,
                 basicAuth = basicAuth)
         }
     }
@@ -117,17 +90,17 @@ object HttpHeaderParser {
         return header.split(" ")[1].toInt()
     }
 
-    private fun parseContentType(header: String): String {
+    fun parseContentType(header: String): String {
         return header
             .substringAfter("Content-Type: ", "")
             .substringBefore("\n", "")
     }
 
-    private fun parseContentLength(header: String): Int {
+    fun parseContentLength(header: String): Long {
         return header
             .substringAfter("Content-Length: ", "")
             .substringBefore("\n", "0")
-            .toInt()
+            .toLong()
     }
 
     private fun parseHttpUrl(header: String): HttpUrl? {
@@ -167,6 +140,59 @@ object HttpHeaderParser {
         } else {
             null
         }
+    }
+
+    private inline fun <reified T>parseContent(
+        buffer: DataInputStream,
+        contentType: String,
+        contentLength: Long
+    ): T {
+        val byteArraySize = 1024
+        val byteArray = ByteArray(byteArraySize)
+        var byteRead = 0
+        val response: T
+
+        when (contentType) {
+            "text/html" -> {
+                var temp = ""
+                if (contentLength > 0) {
+                    var readStatus = buffer.read(byteArray)
+                    while (true) {
+                        byteRead += readStatus
+                        if (readStatus > 0) {
+                            temp += String(byteArray.sliceArray(0 until readStatus))
+                        }
+                        if (byteRead >= contentLength || readStatus < 0) {
+                            break
+                        }
+                        readStatus = buffer.read(byteArray)
+                    }
+                } else {
+                    var lineOfString: String? = ""
+                    while (lineOfString != null) {
+                        lineOfString = buffer.readLine()
+                        if (lineOfString != null) {
+                            temp += lineOfString + "\n"
+                        }
+                        if (lineOfString.contains("</html>")) {
+                            break
+                        }
+                    }
+                }
+                response = HttpContentParser.parseBody(temp) as T
+            }
+
+            else -> {
+                response = fileDownloader.downloadFile(
+                    buffer = buffer,
+                    fileName = System.currentTimeMillis().toString(),
+                    contentType = contentType,
+                    contentLength = contentLength
+                ) as T
+            }
+        }
+
+        return response
     }
 
     private fun parseStatus(header: String): String {
