@@ -71,10 +71,13 @@ fun main() {
         bufferOut.flush()
 
         httpResult = HttpHeaderParser.parseHeader(dataInput)
-//        httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+//        httpResult = HttpHeaderParser.parseHeader(bufferedReader
 
         socket.close()
     }
+
+    println("header:\n" + httpResult.contentHeader)
+    println("content:\n" + httpResult.content)
 
     with(httpResult) {
         println("code: $code")

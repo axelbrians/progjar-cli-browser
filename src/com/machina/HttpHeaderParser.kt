@@ -15,11 +15,12 @@ object HttpHeaderParser {
 //        println("reading bytes")
         var lineOfString: String? = ""
         var response = ""
+        var contentHeader = ""
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
 //            println(lineOfString)
-            response += lineOfString + "\n"
+            contentHeader += lineOfString + "\n"
 
             if (lineOfString.isBlank()) {
                 break
@@ -32,11 +33,11 @@ object HttpHeaderParser {
         }
 //        println("read header complete")
 
-        val code = parseCode(response.substringBefore("\n"))
-        val status = parseStatus(response.substringBefore("\n"))
-        val contentType = parseContentType(response)
-        val contentLength = parseContentLength(response)
-        var httpUrl = parseHttpUrl(response)
+        val code = parseCode(contentHeader.substringBefore("\n"))
+        val status = parseStatus(contentHeader.substringBefore("\n"))
+        val contentType = parseContentType(contentHeader)
+        val contentLength = parseContentLength(contentHeader)
+        var httpUrl = parseHttpUrl(contentHeader)
 
         if (prevRedirect == "${httpUrl?.host}/${httpUrl?.url}") {
             httpUrl = null
@@ -100,12 +101,13 @@ object HttpHeaderParser {
                     }
                 }
             }
-            println(response)
+//            println(response)
             return HttpResult(
                 code = code,
                 status = status,
                 contentType = contentType,
                 contentLength = contentLength,
+                contentHeader = contentHeader,
                 content = response,
                 basicAuth = basicAuth)
         }
