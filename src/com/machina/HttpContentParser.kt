@@ -3,8 +3,7 @@ package com.machina
 object HttpContentParser {
     fun parseBody(httpResult: HttpResult): HttpContent {
         val content = httpResult.content.toString()
-        var processedContent = removeComment(removeLink(removeScript(content)))
-
+        var processedContent = removeEntities(removeComment(removeLink(removeScript(content))))
 
         var title = ""
 
@@ -14,6 +13,16 @@ object HttpContentParser {
         if (matchedString != null) {
             title = matchedString.value
         }
+
+        regex = "<body[^>]*>[\\s\\S]*?</body>".toRegex()
+        matchedString = regex.find(processedContent, 0)
+        if (matchedString != null) {
+            processedContent = matchedString.value
+        }
+
+        processedContent = removeAllTags(processedContent)
+        processedContent = removeSpaces(processedContent)
+        processedContent = removeNoContentLink(processedContent)
 
         val rawATags: MutableList<String> = ArrayList()
 
@@ -25,15 +34,6 @@ object HttpContentParser {
                     matchResult -> rawATags.add(matchResult.value)
             }
         }
-
-        regex = "<body[^>]*>[\\s\\S]*?</body>".toRegex()
-        matchedString = regex.find(processedContent, 0)
-        if (matchedString != null) {
-            processedContent = matchedString.value
-        }
-
-        processedContent = removeAllTags(processedContent)
-        processedContent = removeSpaces(processedContent)
 
         val clickableLinks: MutableList<String> = ArrayList()
         clickableLinks.add("")
@@ -68,6 +68,30 @@ object HttpContentParser {
     private fun removeSpaces(content: String): String {
         val regex = "^\\s+".toRegex(RegexOption.MULTILINE)
         return regex.replace(content, "")
+    }
+
+    private fun removeNoContentLink(content: String): String {
+        val regex = "<a[^>]*></a>".toRegex()
+        return regex.replace(content, "")
+    }
+
+    private fun removeEntities(content: String): String {
+        var temp = content
+        temp = temp.replace("&nbsp;", " ")
+        temp = temp.replace("&lt;", "<")
+        temp = temp.replace("&gt;", ">")
+        temp = temp.replace("&amp;", "&")
+        temp = temp.replace("&quot;", "\"\"")
+        temp = temp.replace("&apos;", "\'\'")
+
+        temp = temp.replace("&nbsp", " ")
+        temp = temp.replace("&lt", "<")
+        temp = temp.replace("&gt", ">")
+        temp = temp.replace("&amp", "&")
+        temp = temp.replace("&quot", "\"\"")
+        temp = temp.replace("&apos", "\'\'")
+
+        return temp
     }
 
 //    private fun splitLinks(content: String): String {
