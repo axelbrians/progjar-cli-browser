@@ -76,8 +76,10 @@ fun main() {
         socket.close()
     }
 
-    println("header:\n" + httpResult.contentHeader)
-    println("content:\n" + httpResult.content)
+//    println("header:\n" + httpResult.contentHeader)
+//    println("content:\n" + httpResult.content)
+
+    var httpContent = HttpContentParser.parseBody(httpResult)
 
     with(httpResult) {
         println("code: $code")
