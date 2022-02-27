@@ -9,15 +9,16 @@ import java.util.*
 
 object HttpHeaderParser {
 
+    private var prevRedirect = ""
+
     fun parseHeader(buffer: DataInputStream): HttpResult {
 //        println("reading bytes")
-
         var lineOfString: String? = ""
         var response = ""
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-            println(lineOfString)
+//            println(lineOfString)
             response += lineOfString + "\n"
 
             if (lineOfString.isBlank()) {
@@ -35,19 +36,25 @@ object HttpHeaderParser {
         val status = parseStatus(response.substringBefore("\n"))
         val contentType = parseContentType(response)
         val contentLength = parseContentLength(response)
-        val httpUrl = parseHttpUrl(response)
+        var httpUrl = parseHttpUrl(response)
+
+        if (prevRedirect == "${httpUrl?.host}/${httpUrl?.url}") {
+            httpUrl = null
+        }
+        prevRedirect = "${httpUrl?.host}/${httpUrl?.url}"
 
         if (httpUrl != null) {
             val socket = Socket(httpUrl.host, 80)
 
             val bufferedReader = DataInputStream(socket.getInputStream())
             val bufferOut = BufferedOutputStream(socket.getOutputStream())
+            val request = "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
+                    "Host: ${httpUrl.host}\r\n" +
+                    "User-Agent: KosimCLI/2.0\r\n" +
+                    "Cache-Control: no-cache\r\n\r\n"
 
             println("redirecting to ${httpUrl.protocol}://${httpUrl.host}/${httpUrl.url}\n\n")
-            bufferOut.write((
-                    "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
-                            "Host: ${httpUrl.host}\r\n\r\n"
-                    ).toByteArray())
+            bufferOut.write(request.toByteArray())
             bufferOut.flush()
 
             val header = parseHeader(bufferedReader)
@@ -122,18 +129,24 @@ object HttpHeaderParser {
     }
 
     private fun parseHttpUrl(header: String): HttpUrl? {
-        val rawUrl = if (header.substringAfter("Refresh: ", "").isNotBlank()) {
-            header.substringAfter("Refresh: ")
+        val rawUrl: String
+        val httpProtocol: String
+
+        if (header.substringAfter("Refresh: ", "").isNotBlank()) {
+            rawUrl = header.substringAfter("Refresh: ")
                 .substringBefore("\n", "")
+            httpProtocol = rawUrl.substringAfter("=")
+                .substringBefore(":", "")
         } else if (header.substringAfter("Location: ", "").isNotBlank()) {
-            header.substringAfter("Location: ")
+            rawUrl = header.substringAfter("Location: ")
                 .substringBefore("\n", "")
+            httpProtocol = rawUrl.substringBefore("://", "")
         } else {
-            ""
+            rawUrl = ""
+            httpProtocol = ""
         }
 
         val temp = rawUrl.substringAfter("://", "")
-        val httpProtocol: String = rawUrl.substringBefore(":")
         val redirectHost: String = temp.substringBefore("/")
         val redirectUrl: String = temp.substringAfter("/", "").substringBefore("\n")
 

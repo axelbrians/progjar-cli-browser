@@ -13,7 +13,7 @@ fun main() {
     "http://monkp.if.its.ac.id"
     "https://pbs.twimg.com/media/FMfbrkzaMAQJnaL?format=jpg&name=large"
     "http://basic.ichimarumaru.tech" + "kuncimenujulautan:tQKEJFbgNGC1NCZlWAOjhyCOm6o3xEbPkJhTciZN"
-    "https://scontent-sin6-2.xx.fbcdn.net/v/t39.30808-6/274463149_1309864126191919_5646951478282062114_n.jpg?_nc_cat=102&ccb=1-5&_nc_sid=5cd70e&_nc_eui2=AeEjLu92sbRoU2a_GWOHvQITvDGcxCKP6oK8MZzEIo_qgiqAMFQ2piZGvaWCE7sPMEiuWSAzco2_nsDq7rpYExhi&_nc_ohc=XtIF7nUoC4sAX9jN5sd&_nc_ht=scontent-sin6-2.xx&oh=00_AT8hGfSv_NlTmHxgx4DjMBb2GTvXMat8jRgw9Dx4F9F6LA&oe=62200274"
+    "https://cdn.discordapp.com/attachments/862018186685579334/947118411509538886/SPOILER_VP3.jpg"
 
 
     val sc = Scanner(System.`in`)
@@ -24,7 +24,7 @@ fun main() {
         "monta.if.its.ac.id",
         "pbs.twimg.com",
         "basic.ichimarumaru.tech",
-        "scontent-sin6-2.xx.fbcdn.net"
+        "cdn.discordapp.com"
     )
 
     val targetUrlList = listOf(
@@ -32,19 +32,21 @@ fun main() {
         "",
         "media/FMfbrkzaMAQJnaL?format=jpg&name=large",
         "",
-        "v/t39.30808-6/274463149_1309864126191919_5646951478282062114_n.jpg?_nc_cat=102&ccb=1-5&_nc_sid=5cd70e&_nc_eui2=AeEjLu92sbRoU2a_GWOHvQITvDGcxCKP6oK8MZzEIo_qgiqAMFQ2piZGvaWCE7sPMEiuWSAzco2_nsDq7rpYExhi&_nc_ohc=XtIF7nUoC4sAX9jN5sd&_nc_ht=scontent-sin6-2.xx&oh=00_AT8hGfSv_NlTmHxgx4DjMBb2GTvXMat8jRgw9Dx4F9F6LA&oe=62200274"
+        "attachments/862018186685579334/947118411509538886/SPOILER_VP3.jpg"
     )
 
     var socket = Socket(targetHostList[index], 80)
 //    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
     var dataInput = DataInputStream(socket.getInputStream())
     var bufferOut = BufferedOutputStream(socket.getOutputStream())
+    var request = "GET /${targetUrlList[index]} HTTP/1.1\r\n" +
+            "Host: ${targetHostList[index]}\r\n" +
+            "User-Agent: KosimCLI/2.0\r\n" +
+            "Cache-Control: no-cache\r\n\r\n"
 
     println("asking for https://${targetHostList[index]}/${targetUrlList[index]}")
-    bufferOut.write((
-            "GET /${targetUrlList[index]} HTTP/1.1\r\n" +
-            "Host: ${targetHostList[index]}\r\n\r\n"
-            ).toByteArray())
+    println("with request \n$request")
+    bufferOut.write(request.toByteArray())
     bufferOut.flush()
 
 //    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
@@ -55,7 +57,6 @@ fun main() {
     if(httpResult.basicAuth == 1) {
         socket = Socket(targetHostList[index], 80)
         dataInput = DataInputStream(socket.getInputStream())
-//        bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
         bufferOut = BufferedOutputStream(socket.getOutputStream())
         print("Enter username: ")
         val username = sc.nextLine()
@@ -63,11 +64,10 @@ fun main() {
         val password = sc.nextLine()
         val up = "$username:$password"
         val credential: String = Base64.getEncoder().encodeToString(up.toByteArray())
-        bufferOut.write((
-                "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
+        request =  "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
                 "Host: ${targetHostList[3]}\r\n" +
                 "Authorization: Basic $credential\r\n\r\n"
-                ).toByteArray())
+        bufferOut.write(request.toByteArray())
         bufferOut.flush()
 
         httpResult = HttpHeaderParser.parseHeader(dataInput)
