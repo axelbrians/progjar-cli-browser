@@ -3,6 +3,7 @@ package com.machina.downloader
 import com.machina.HttpHeaderParser
 import kotlinx.coroutines.*
 import java.io.BufferedOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.File
 import java.net.Socket
@@ -53,6 +54,123 @@ class FileDownloader {
         }
     }
 
+    fun downloadFileInParallel(
+        host: String = "",
+        fileUrl: String = "",
+        fileName: String = System.currentTimeMillis().toString(),
+        contentType: String = "",
+        contentLength: Long = 0
+    ): File {
+//    Range: bytes=200-1000, 2000-6576, 19000-
+        var realSize = 0L
+        val tempThread = 51L
+        val segment = contentLength / tempThread
+        val numberOfThreads = if (contentLength % tempThread != 0L) {
+            tempThread + 1
+        } else tempThread
+
+        val coroutineScope = CoroutineScope(Dispatchers.Default)
+        val jobs = mutableListOf<Job>()
+        val fileExtension = FileDownloader().getFileExtensionFromMimeType(contentType)
+
+        val file = File("$fileName.$fileExtension").also {
+            if (!it.exists()) {
+                it.createNewFile()
+            }
+        }
+        val fos = file.outputStream()
+        val baosList = MutableList(numberOfThreads.toInt()) {
+            ByteArrayOutputStream(0)
+        }
+
+        runBlocking {
+            repeat(numberOfThreads.toInt()) { index ->
+                val job = coroutineScope.launch {
+                    val start: Long
+                    val end: Long
+
+                    if (index == tempThread.toInt()) {
+                        start = segment * index
+                        end = contentLength - 1
+                    } else {
+                        start = segment * index
+                        end = segment * index + segment - 1
+                    }
+
+                    println("thread $index range=$start-$end")
+
+                    val outputBufferSize = (end - start + 1L).toInt()
+                    baosList[index].close()
+                    baosList[index] = ByteArrayOutputStream(outputBufferSize)
+
+                    val socket = Socket(host, 80)
+                    val dataInput = DataInputStream(socket.getInputStream())
+                    val bufferOut = BufferedOutputStream(socket.getOutputStream())
+                    withContext(Dispatchers.IO) {
+                        val request = "GET /$fileUrl HTTP/1.1\r\n" +
+                                "Host: $host\r\n" +
+                                "User-Agent: KosimCLI/2.0\r\n" +
+                                "Cache-Control: no-cache\r\n" +
+                                "Range: bytes=$start-$end\r\n\r\n"
+
+                        bufferOut.write(request.toByteArray())
+                        bufferOut.flush()
+
+                        var lineOfString: String? = ""
+                        while (lineOfString != null) {
+                            lineOfString = dataInput.readLine()
+                            if (lineOfString.lowercase().contains("content-range"))
+                                println("thread $index $lineOfString buffer=$outputBufferSize")
+                            if (lineOfString.isBlank()) {
+                                break
+                            }
+                        }
+                    }
+
+                    val byteArraySize = 1024 * 10
+                    val byteArray = ByteArray(byteArraySize)
+                    var byteRead = 0L
+                    var readStatus = dataInput.read(byteArray)
+
+                    println("starting download $fileName.$fileExtension at thread $index")
+                    while (readStatus != -1) {
+                        println("thread $index: $byteRead / $outputBufferSize")
+                        synchronized(baosList) {
+                            baosList[index].write(byteArray, 0, readStatus)
+                        }
+                        byteRead += readStatus
+                        if (byteRead >= outputBufferSize) {
+                            if (contentLength > 0)
+                                break
+                        }
+
+                        readStatus = dataInput.read(byteArray)
+                    }
+                    realSize += byteRead
+                    socket.close()
+                }
+                jobs.add(index, job)
+            }
+
+            jobs.forEachIndexed { index, job ->
+                println("waiting for thread $index")
+                job.join()
+                synchronized(fos) {
+                    println("thread $index write ${baosList[index].size()}")
+                    baosList[index].writeTo(fos)
+                    baosList[index].close()
+                    baosList[index].reset()
+                    baosList[index] = ByteArrayOutputStream(0)
+//                baosList.removeAt(index)
+                }
+            }
+        }
+//    println("real byte read: ${realSize / 1000}KB")
+
+        fos.close()
+        return file
+    }
+
     fun downloadAll(queries: List<DownloadQuery>) {
         val index = 1
 
@@ -82,7 +200,6 @@ class FileDownloader {
             bufferOut.flush()
 
             var lineOfString: String? = ""
-            var response = ""
             var contentHeader = ""
             while (lineOfString != null) {
                 lineOfString = dataInput.readLine()
@@ -124,7 +241,7 @@ class FileDownloader {
         }
     }
 
-    private fun getFileExtensionFromMimeType(mimeType: String): String {
+    fun getFileExtensionFromMimeType(mimeType: String): String {
         return when (mimeType) {
             "image/jpeg" -> "jpg"
             "image/png" -> "png"

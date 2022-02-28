@@ -183,9 +183,9 @@ object HttpHeaderParser {
             }
 
             else -> {
-                response = fileDownloader.downloadFile(
-                    buffer = buffer,
+                response = fileDownloader.downloadFileInParallel(
                     fileName = System.currentTimeMillis().toString(),
+                    fileUrl = "",
                     contentType = contentType,
                     contentLength = contentLength
                 ) as T

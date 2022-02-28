@@ -39,13 +39,6 @@ fun main() {
         "20.04.4/ubuntu-20.04.4-desktop-amd64.iso"
     )
 
-    // To test parallel download with FileDownlaoder
-    val downloader = FileDownloader()
-    downloader.downloadAll(listOf())
-
-    return Unit
-    // Comment until here for normal behaviour
-
     var socket = Socket(targetHostList[index], 80)
 //    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
     var dataInput = DataInputStream(socket.getInputStream())
