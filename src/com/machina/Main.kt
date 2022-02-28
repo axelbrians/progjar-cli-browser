@@ -72,7 +72,8 @@ fun main() {
 //                "User-Agent: KosimCLI/2.0\r\n" +
 //                "Cache-Control: no-cache\r\n\r\n"
 
-        println("hostname:${hostname}, path:${path}")
+        println("hostname:$hostname")
+        println("path:$path")
 
         var request = "GET /${path} HTTP/1.1\r\n" +
                 "Host: ${hostname}\r\n" +
