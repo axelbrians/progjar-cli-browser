@@ -47,7 +47,7 @@ fun main() {
     // Comment until here for normal behaviour
 
     while(true) {
-        println("Axel CLI Web Browser. Type -1 or \'exit\' to exit")
+        println("Axel CLI Web Browser. Type \"-1\" or \"exit\" to exit")
         print("URI: ")
         var input = sc.nextLine()
 
