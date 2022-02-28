@@ -40,64 +40,99 @@ fun main() {
     )
 
     // To test parallel download with FileDownlaoder
-    val downloader = FileDownloader()
-    downloader.downloadAll(listOf())
-
-    return Unit
+//    val downloader = FileDownloader()
+//    downloader.downloadAll(listOf())
+//
+//    return Unit
     // Comment until here for normal behaviour
 
-    var socket = Socket(targetHostList[index], 80)
+    while(true) {
+        println("Axel CLI Web Browser. Type -1 or \'exit\' to exit")
+        print("URI: ")
+        var input = sc.nextLine()
+
+        if(input.equals("exit") || input.equals("-1")) {
+            println("Exiting Axel CLI Web Browser")
+            break;
+        }
+
+        val delim = "/"
+        val httpRegex = "http.?://".toRegex()
+
+        input = httpRegex.replace(input, "")
+        val hostname = input.split(delim)[0]
+        val pathLength = input.length - hostname.length - 1
+
+        var path:String? = ""
+        if(pathLength > 0) {
+            path = input.takeLast(pathLength)
+        }
+
+        var socket = Socket(hostname, 80)
 //    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
-    var dataInput = DataInputStream(socket.getInputStream())
-    var bufferOut = BufferedOutputStream(socket.getOutputStream())
-    var request = "GET /${targetUrlList[index]} HTTP/1.1\r\n" +
-            "Host: ${targetHostList[index]}\r\n" +
-            "User-Agent: KosimCLI/2.0\r\n" +
-            "Cache-Control: no-cache\r\n\r\n"
+        var dataInput = DataInputStream(socket.getInputStream())
+        var bufferOut = BufferedOutputStream(socket.getOutputStream())
+//        var request = "GET /${targetUrlList[index]} HTTP/1.1\r\n" +
+//                "Host: ${targetHostList[index]}\r\n" +
+//                "User-Agent: KosimCLI/2.0\r\n" +
+//                "Cache-Control: no-cache\r\n\r\n"
 
-    println("asking for https://${targetHostList[index]}/${targetUrlList[index]}")
-    println("with request \n$request")
-    bufferOut.write(request.toByteArray())
-    bufferOut.flush()
+        println("hostname:${hostname}, path:${path}")
 
-//    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
-    var httpResult = HttpHeaderParser.parseHeader(dataInput)
+        var request = "GET /${path} HTTP/1.1\r\n" +
+                "Host: ${hostname}\r\n" +
+                "User-Agent: KosimCLI/2.0\r\n" +
+                "Cache-Control: no-cache\r\n\r\n"
 
-    socket.close()
-
-    if(httpResult.basicAuth == 1) {
-        socket = Socket(targetHostList[index], 80)
-        dataInput = DataInputStream(socket.getInputStream())
-        bufferOut = BufferedOutputStream(socket.getOutputStream())
-        print("Enter username: ")
-        val username = sc.nextLine()
-        print("Enter password: ")
-        val password = sc.nextLine()
-        val up = "$username:$password"
-        val credential: String = Base64.getEncoder().encodeToString(up.toByteArray())
-        request =  "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
-                "Host: ${targetHostList[3]}\r\n" +
-                "Authorization: Basic $credential\r\n\r\n"
+        println("asking for https://${input}")
+        println("with request \n$request")
         bufferOut.write(request.toByteArray())
         bufferOut.flush()
 
-        httpResult = HttpHeaderParser.parseHeader(dataInput)
-//        httpResult = HttpHeaderParser.parseHeader(bufferedReader
+//    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
+        var httpResult = HttpHeaderParser.parseHeader(dataInput)
 
         socket.close()
-    }
+
+        if(httpResult.basicAuth == 1) {
+            socket = Socket(targetHostList[index], 80)
+            dataInput = DataInputStream(socket.getInputStream())
+            bufferOut = BufferedOutputStream(socket.getOutputStream())
+            print("Enter username: ")
+            val username = sc.nextLine()
+            print("Enter password: ")
+            val password = sc.nextLine()
+            val up = "$username:$password"
+            val credential: String = Base64.getEncoder().encodeToString(up.toByteArray())
+//            request =  "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
+//                    "Host: ${targetHostList[3]}\r\n" +
+//                    "Authorization: Basic $credential\r\n\r\n"
+
+            request = "GET /${path} HTTP/1.1\r\n" +
+                    "Host: ${hostname}\r\n" +
+                    "Authorization: Basic $credential\r\n" +
+                    "User-Agent: KosimCLI/2.0\r\n" +
+                    "Cache-Control: no-cache\r\n\r\n"
+            bufferOut.write(request.toByteArray())
+            bufferOut.flush()
+
+            httpResult = HttpHeaderParser.parseHeader(dataInput)
+//        httpResult = HttpHeaderParser.parseHeader(bufferedReader
+
+            socket.close()
+        }
 
 //    println("header:\n" + httpResult.contentHeader)
 //    println("content:\n" + httpResult.content)
 
-    with(httpResult) {
-        println("code: $code")
-        println("status: $status")
-        println("contentType: $contentType")
-        println("contentLength $contentLength")
-        println("content $content")
-
+        with(httpResult) {
+            println("code: $code")
+            println("status: $status")
+            println("contentType: $contentType")
+            println("contentLength $contentLength")
+            println("content $content")
+            println("\n")
+        }
     }
-
 }
 
