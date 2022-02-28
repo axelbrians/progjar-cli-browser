@@ -11,7 +11,11 @@ object HttpHeaderParser {
     private val fileDownloader = FileDownloader()
     private var prevRedirect = ""
 
-    fun parseHeader(buffer: DataInputStream): HttpResult {
+    fun parseHeader(
+        buffer: DataInputStream,
+        host: String = "",
+        fileUrl: String = ""
+    ): HttpResult {
 //        println("reading bytes")
         var lineOfString: String? = ""
         var response = ""
@@ -19,7 +23,7 @@ object HttpHeaderParser {
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-            println(lineOfString)
+//            println(lineOfString)
             contentHeader += lineOfString + "\n"
 
             if (lineOfString.isBlank()) {
@@ -66,11 +70,19 @@ object HttpHeaderParser {
             if(code in 200..299) {
                 when (contentType) {
                     "text/html" -> {
-                        response += parseContent<HttpContent>(buffer, contentType, contentLength)
+                        response += parseContent<HttpContent>(
+                            buffer,
+                            contentType,
+                            contentLength)
                         result = response
                     }
                     else -> {
-                        result = parseContent<File>(buffer, contentType, contentLength)
+                        result = parseContent<File>(
+                            buffer = buffer,
+                            contentType = contentType,
+                            contentLength = contentLength,
+                            host = host,
+                            fileUrl = fileUrl)
                     }
                 }
             }
@@ -145,7 +157,9 @@ object HttpHeaderParser {
     private inline fun <reified T>parseContent(
         buffer: DataInputStream,
         contentType: String,
-        contentLength: Long
+        contentLength: Long,
+        host: String = "",
+        fileUrl: String = "",
     ): T {
         val byteArraySize = 1024
         val byteArray = ByteArray(byteArraySize)
@@ -184,8 +198,9 @@ object HttpHeaderParser {
 
             else -> {
                 response = fileDownloader.downloadFileInParallel(
+                    host = host,
+                    fileUrl = fileUrl,
                     fileName = System.currentTimeMillis().toString(),
-                    fileUrl = "",
                     contentType = contentType,
                     contentLength = contentLength
                 ) as T

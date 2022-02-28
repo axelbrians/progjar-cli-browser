@@ -63,7 +63,7 @@ class FileDownloader {
     ): File {
 //    Range: bytes=200-1000, 2000-6576, 19000-
         var realSize = 0L
-        val tempThread = 51L
+        val tempThread = 5L
         val segment = contentLength / tempThread
         val numberOfThreads = if (contentLength % tempThread != 0L) {
             tempThread + 1
@@ -73,7 +73,7 @@ class FileDownloader {
         val jobs = mutableListOf<Job>()
         val fileExtension = FileDownloader().getFileExtensionFromMimeType(contentType)
 
-        val file = File("$fileName.$fileExtension").also {
+        val file = File(DOWNLOAD_DIR, "$fileName.$fileExtension").also {
             if (!it.exists()) {
                 it.createNewFile()
             }
@@ -97,7 +97,7 @@ class FileDownloader {
                         end = segment * index + segment - 1
                     }
 
-                    println("thread $index range=$start-$end")
+//                    println("thread $index range=$start-$end")
 
                     val outputBufferSize = (end - start + 1L).toInt()
                     baosList[index].close()
@@ -119,8 +119,6 @@ class FileDownloader {
                         var lineOfString: String? = ""
                         while (lineOfString != null) {
                             lineOfString = dataInput.readLine()
-                            if (lineOfString.lowercase().contains("content-range"))
-                                println("thread $index $lineOfString buffer=$outputBufferSize")
                             if (lineOfString.isBlank()) {
                                 break
                             }
@@ -132,9 +130,9 @@ class FileDownloader {
                     var byteRead = 0L
                     var readStatus = dataInput.read(byteArray)
 
-                    println("starting download $fileName.$fileExtension at thread $index")
+//                    println("starting download $fileName.$fileExtension at thread $index")
                     while (readStatus != -1) {
-                        println("thread $index: $byteRead / $outputBufferSize")
+//                        println("thread $index: $byteRead / $outputBufferSize")
                         synchronized(baosList) {
                             baosList[index].write(byteArray, 0, readStatus)
                         }
@@ -153,10 +151,10 @@ class FileDownloader {
             }
 
             jobs.forEachIndexed { index, job ->
-                println("waiting for thread $index")
+//                println("waiting for thread $index")
                 job.join()
                 synchronized(fos) {
-                    println("thread $index write ${baosList[index].size()}")
+//                    println("thread $index write ${baosList[index].size()}")
                     baosList[index].writeTo(fos)
                     baosList[index].close()
                     baosList[index].reset()
