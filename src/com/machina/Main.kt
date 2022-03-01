@@ -64,14 +64,8 @@ fun main() {
         }
 
         var socket = Socket(hostname, 80)
-//    var bufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
         var dataInput = DataInputStream(socket.getInputStream())
         var bufferOut = BufferedOutputStream(socket.getOutputStream())
-//        var request = "GET /${targetUrlList[index]} HTTP/1.1\r\n" +
-//                "Host: ${targetHostList[index]}\r\n" +
-//                "User-Agent: KosimCLI/2.0\r\n" +
-//                "Cache-Control: no-cache\r\n\r\n"
-
         println("hostname:$hostname")
         println("path:$path")
 
@@ -85,7 +79,6 @@ fun main() {
         bufferOut.write(request.toByteArray())
         bufferOut.flush()
 
-//    var httpResult = HttpHeaderParser.parseHeader(bufferedReader)
         var httpResult = HttpHeaderParser.parseHeader(
             host = hostname,
             fileUrl = path ?: "",
@@ -116,7 +109,6 @@ fun main() {
             bufferOut.flush()
 
             httpResult = HttpHeaderParser.parseHeader(dataInput)
-//        httpResult = HttpHeaderParser.parseHeader(bufferedReader
 
             socket.close()
         }
