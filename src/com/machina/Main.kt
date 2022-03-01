@@ -66,16 +66,18 @@ fun main() {
         var socket = Socket(hostname, 80)
         var dataInput = DataInputStream(socket.getInputStream())
         var bufferOut = BufferedOutputStream(socket.getOutputStream())
-        println("hostname:$hostname")
-        println("path:$path")
+
+//        println("hostname:$hostname")
+//        println("path:$path")
 
         var request = "GET /${path} HTTP/1.1\r\n" +
                 "Host: ${hostname}\r\n" +
                 "User-Agent: KosimCLI/2.0\r\n" +
                 "Cache-Control: no-cache\r\n\r\n"
 
-        println("asking for https://${input}")
-        println("with request \n$request")
+//        println("asking for https://${input}")
+//        println("with request \n$request")
+
         bufferOut.write(request.toByteArray())
         bufferOut.flush()
 
@@ -108,19 +110,29 @@ fun main() {
             bufferOut.write(request.toByteArray())
             bufferOut.flush()
 
-            httpResult = HttpHeaderParser.parseHeader(dataInput)
+            httpResult = HttpHeaderParser.parseHeader(
+                host = hostname,
+                fileUrl = path ?: "",
+                buffer = dataInput)
 
             socket.close()
         }
 
         with(httpResult) {
-            println("Code: $code")
-            println("Status: $status")
-            println("Content Type: $contentType")
+//            println("Code: $code")
+//            println("Status: $status")
+//            println("Content Type: $contentType")
 
             if (content is File) {
                 println("File detected, opening with default application. . .")
                 Desktop.getDesktop().open(content)
+            }
+            else if(content is HttpContent) {
+                println(content.title)
+                println(content.text)
+            }
+            else {
+                println(content)
             }
 
             println("- - - - - - - - - -\n")

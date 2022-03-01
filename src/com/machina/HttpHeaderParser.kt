@@ -18,7 +18,7 @@ object HttpHeaderParser {
     ): HttpResult {
 //        println("reading bytes")
         var lineOfString: String? = ""
-        var response = ""
+//        var response: Any = ""
         var contentHeader = ""
         var basicAuth = 0
         while (lineOfString != null) {
@@ -70,11 +70,11 @@ object HttpHeaderParser {
             if(code in 200..299) {
                 when (contentType) {
                     "text/html" -> {
-                        response += parseContent<HttpContent>(
+                        result = parseContent<HttpContent>(
                             buffer,
                             contentType,
                             contentLength)
-                        result = response
+//                        result = response
                     }
                     else -> {
                         result = parseContent<File>(

@@ -28,18 +28,6 @@ object HttpContentParser {
         processedContent = removeNoContentLink(processedContent)
         processedContent = changeATagtoNewline(processedContent)
 
-        val rawATags: MutableList<String> = ArrayList()
-
-//        regex = "<a[^>]*>[\\s\\S]*?</a>".toRegex()
-//
-//        var sequenceMatchedString : Sequence<MatchResult> = regex.findAll(processedContent, 0)
-//        if (sequenceMatchedString != null) {
-//            sequenceMatchedString.forEach()
-//            {
-//                    matchResult -> rawATags.add(matchResult.value)
-//            }
-//        }
-
         val clickableLinks: MutableList<String> = ArrayList()
 
         val patternTag = Pattern.compile("(?i)<a([^>]+)>(.*)")
@@ -53,8 +41,16 @@ object HttpContentParser {
 
             val matcherLink = patternLink.matcher(href)
             if (matcherLink.find()) {
-                val link = matcherLink.group(1)
-                clickableLinks.add("$linkText -> $link")
+                var link = matcherLink.group(1)
+                val hashRegex = "\"#.*\"".toRegex()
+                link = hashRegex.replace(link, "")
+                if(link.equals("")) {
+                    clickableLinks.add("$linkText")
+                }
+                else {
+                    clickableLinks.add("$linkText -> $link")
+                }
+
             } else {
                 clickableLinks.add(linkText)
             }
@@ -66,9 +62,11 @@ object HttpContentParser {
             processedContent = regex.replaceFirst(processedContent, link)
         }
 
-        println(title)
-        println(processedContent)
+//        println(title)
+//        println(processedContent)
+
         return HttpContent(
+            title = title,
             text = processedContent,
             links = clickableLinks
         )
@@ -127,18 +125,4 @@ object HttpContentParser {
 
         return temp
     }
-
-//    private fun splitLinks(content: String): String {
-//        // Kode parsing disini
-//        val regex = "(?<=<a[^>]*>)[\\s\\S](.*)(?=</a>)".toRegex()
-//        val matchedString : Sequence<MatchResult> = regex.findAll(content, 0)
-//        if (matchedString != null) {
-//            matchedString.forEach()
-//            {
-//                    matchResult -> println(matchResult.value)
-//            }
-//        }
-//        var processedContent = content
-//        return processedContent
-//    }
 }
