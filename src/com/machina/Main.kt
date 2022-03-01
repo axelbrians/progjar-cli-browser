@@ -42,6 +42,7 @@ fun main() {
     )
 
     while(true) {
+        HttpHeaderParser.resetVisitedLink()
         println("Axel CLI Web Browser. Type \"-1\" or \"exit\" to exit")
         print("URI: ")
         var input = sc.nextLine()

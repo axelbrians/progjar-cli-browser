@@ -9,7 +9,9 @@ import java.net.Socket
 object HttpHeaderParser {
 
     private val fileDownloader = FileDownloader()
-    private var prevRedirect = ""
+
+    private var _visitedLink = mutableListOf<String>()
+    val visitedLink: List<String> = _visitedLink
 
     fun parseHeader(
         buffer: DataInputStream,
@@ -44,10 +46,12 @@ object HttpHeaderParser {
         val contentLength = parseContentLength(contentHeader)
         var httpUrl = parseHttpUrl(contentHeader)
 
-        if (prevRedirect == "${httpUrl?.host}/${httpUrl?.url}") {
+
+        if ("${httpUrl?.host}/${httpUrl?.url}" in _visitedLink) {
             httpUrl = null
         }
-        prevRedirect = "${httpUrl?.host}/${httpUrl?.url}"
+
+        _visitedLink.add("${httpUrl?.host}/${httpUrl?.url}")
 
         if (httpUrl != null) {
             val socket = Socket(httpUrl.host, 80)
@@ -285,4 +289,8 @@ object HttpHeaderParser {
         }
     }
 
+
+    fun resetVisitedLink() {
+        _visitedLink = mutableListOf()
+    }
 }
