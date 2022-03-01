@@ -23,7 +23,7 @@ object HttpHeaderParser {
         var basicAuth = 0
         while (lineOfString != null) {
             lineOfString = buffer.readLine()
-//            println(lineOfString)
+            println(lineOfString)
             contentHeader += lineOfString + "\n"
 
             if (lineOfString.isBlank()) {
@@ -68,8 +68,9 @@ object HttpHeaderParser {
             return header
         } else {
             if(code in 200..299) {
-                when (contentType) {
-                    "text/html" -> {
+                when {
+                    contentType.contains("html") ||
+                    contentType.contains("text") -> {
                         result = parseContent<HttpContent>(
                             buffer,
                             contentType,
@@ -166,8 +167,9 @@ object HttpHeaderParser {
         var byteRead = 0
         val response: T
 
-        when (contentType) {
-            "text/html" -> {
+        when {
+            contentType.contains("text") ||
+            contentType.contains("html") -> {
                 var temp = ""
                 if (contentLength > 0) {
                     var readStatus = buffer.read(byteArray)
@@ -188,7 +190,7 @@ object HttpHeaderParser {
                         if (lineOfString != null) {
                             temp += lineOfString + "\n"
                         }
-                        if (lineOfString.contains("</html>")) {
+                        if (lineOfString?.contains("</html>") == true) {
                             break
                         }
                     }
