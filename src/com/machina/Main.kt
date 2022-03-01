@@ -42,108 +42,106 @@ fun main() {
     )
 
     while(true) {
-        HttpHeaderParser.resetVisitedLink()
-        println("Axel CLI Web Browser. Type \"-1\" or \"exit\" to exit")
-        print("URI: ")
-        var input = sc.nextLine()
+        try {
+            HttpHeaderParser.resetVisitedLink()
+            println("Axel CLI Web Browser. Type \"-1\" or \"exit\" to exit")
+            print("URI: ")
+            var input = sc.nextLine()
 
-        if(input.equals("exit") || input.equals("-1")) {
-            println("Exiting Axel CLI Web Browser")
-            break;
-        }
+            if(input.equals("exit") || input.equals("-1")) {
+                println("Exiting Axel CLI Web Browser")
+                break;
+            }
 
-        val delim = "/"
-        val httpRegex = "http.?://".toRegex()
+            val delim = "/"
+            val httpRegex = "http.?://".toRegex()
 
-        input = httpRegex.replace(input, "")
-        val hostname = input.split(delim)[0]
-        val pathLength = input.length - hostname.length - 1
+            input = httpRegex.replace(input, "")
+            val hostname = input.split(delim)[0]
+            val pathLength = input.length - hostname.length - 1
 
-        var path:String? = ""
-        if(pathLength > 0) {
-            path = input.takeLast(pathLength)
-        }
+            var path:String? = ""
+            if(pathLength > 0) {
+                path = input.takeLast(pathLength)
+            }
 
-        var socket = Socket(hostname, 80)
-        var dataInput = DataInputStream(socket.getInputStream())
-        var bufferOut = BufferedOutputStream(socket.getOutputStream())
+            var socket = Socket(hostname, 80)
+            var dataInput = DataInputStream(socket.getInputStream())
+            var bufferOut = BufferedOutputStream(socket.getOutputStream())
 
 //        println("hostname:$hostname")
 //        println("path:$path")
 
-        var request = "GET /${path} HTTP/1.1\r\n" +
-                "Host: ${hostname}\r\n" +
-                "User-Agent: KosimCLI/2.0\r\n" +
-                "Cache-Control: no-cache\r\n\r\n"
+            var request = "GET /${path} HTTP/1.1\r\n" +
+                    "Host: ${hostname}\r\n" +
+                    "User-Agent: KosimCLI/2.0\r\n" +
+                    "Cache-Control: no-cache\r\n\r\n"
 
 //        println("asking for https://${input}")
 //        println("with request \n$request")
 
-        bufferOut.write(request.toByteArray())
-        bufferOut.flush()
-
-        var httpResult = HttpHeaderParser.parseHeader(
-            host = hostname,
-            fileUrl = path ?: "",
-            buffer = dataInput)
-
-        socket.close()
-
-        if(httpResult.basicAuth == 1) {
-            socket = Socket(hostname, 80)
-            dataInput = DataInputStream(socket.getInputStream())
-            bufferOut = BufferedOutputStream(socket.getOutputStream())
-            print("Enter username: ")
-            val username = sc.nextLine()
-            print("Enter password: ")
-            val password = sc.nextLine()
-            val up = "$username:$password"
-            val credential: String = Base64.getEncoder().encodeToString(up.toByteArray())
-//            request =  "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
-//                    "Host: ${targetHostList[3]}\r\n" +
-//                    "Authorization: Basic $credential\r\n\r\n"
-
-            request = "GET /${path} HTTP/1.1\r\n" +
-                    "Host: ${hostname}\r\n" +
-                    "Authorization: Basic $credential\r\n" +
-                    "User-Agent: KosimCLI/2.0\r\n" +
-                    "Cache-Control: no-cache\r\n\r\n"
             bufferOut.write(request.toByteArray())
             bufferOut.flush()
 
-            httpResult = HttpHeaderParser.parseHeader(
+            var httpResult = HttpHeaderParser.parseHeader(
                 host = hostname,
                 fileUrl = path ?: "",
                 buffer = dataInput)
 
             socket.close()
-        }
 
-        with(httpResult) {
+            if(httpResult.basicAuth == 1) {
+                socket = Socket(hostname, 80)
+                dataInput = DataInputStream(socket.getInputStream())
+                bufferOut = BufferedOutputStream(socket.getOutputStream())
+                print("Enter username: ")
+                val username = sc.nextLine()
+                print("Enter password: ")
+                val password = sc.nextLine()
+                val up = "$username:$password"
+                val credential: String = Base64.getEncoder().encodeToString(up.toByteArray())
+//            request =  "GET /${targetUrlList[3]} HTTP/1.1\r\n" +
+//                    "Host: ${targetHostList[3]}\r\n" +
+//                    "Authorization: Basic $credential\r\n\r\n"
+
+                request = "GET /${path} HTTP/1.1\r\n" +
+                        "Host: ${hostname}\r\n" +
+                        "Authorization: Basic $credential\r\n" +
+                        "User-Agent: KosimCLI/2.0\r\n" +
+                        "Cache-Control: no-cache\r\n\r\n"
+                bufferOut.write(request.toByteArray())
+                bufferOut.flush()
+
+                httpResult = HttpHeaderParser.parseHeader(
+                    host = hostname,
+                    fileUrl = path ?: "",
+                    buffer = dataInput)
+
+                socket.close()
+            }
+
+            with(httpResult) {
 //            println("Code: $code")
 //            println("Status: $status")
 //            println("Content Type: $contentType")
-            when (content) {
-                is File -> {
-                    println("File detected, opening with default application. . .")
-                    Desktop.getDesktop().open(content)
+                when (content) {
+                    is File -> {
+                        println("File detected, opening with default application. . .")
+                        Desktop.getDesktop().open(content)
+                    }
+                    is HttpContent -> {
+                        println(content.title)
+                        println(content.text)
+                    }
+                    else -> {
+                        println(content)
+                    }
                 }
-                is HttpContent -> {
-                    println(content.title)
-                    println(content.text)
-                }
-                else -> {
-                    println(content)
-                }
+                println("- - - - - - - - - -\n")
             }
-
-            println("- - - - - - - - - -\n")
+        } catch (e: Exception) {
+            println("Something went wrong, either invalid URI or somtehing else.\n\n")
         }
-
-
-
-//    println("header:\n" + httpResult.contentHeader)
-//    println("content:\n" + httpResult.content)
     }
 }
 

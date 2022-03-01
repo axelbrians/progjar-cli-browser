@@ -7,5 +7,5 @@ data class HttpResult(
     val contentLength: Long = 0,
     val contentHeader: Any = "",
     val content: Any = "",
-    val basicAuth: Int
+    val basicAuth: Int = 0
 )

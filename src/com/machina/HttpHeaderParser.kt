@@ -18,89 +18,93 @@ object HttpHeaderParser {
         host: String = "",
         fileUrl: String = ""
     ): HttpResult {
-//        println("reading bytes")
-        var lineOfString: String? = ""
-//        var response: Any = ""
-        var contentHeader = ""
-        var basicAuth = 0
-        while (lineOfString != null) {
-            lineOfString = buffer.readLine()
-            println(lineOfString)
-            contentHeader += lineOfString + "\n"
+        try {
+            println("Waiting response from server. . .\n\n")
+            var lineOfString: String? = ""
+            var contentHeader = ""
+            var basicAuth = 0
+            while (lineOfString != null) {
+                lineOfString = buffer.readLine()
+//            println(lineOfString)
+                contentHeader += lineOfString + "\n"
 
-            if (lineOfString.isBlank()) {
-                break
+                if (lineOfString.isBlank()) {
+                    break
+                }
+
+                if(lineOfString.contains("WWW-Authenticate")) {
+                    basicAuth = 1
+                }
+
             }
-
-            if(lineOfString.contains("WWW-Authenticate")) {
-                basicAuth = 1
-            }
-
-        }
 //        println("read header complete")
 
-        var result: Any = ""
-        val code = parseCode(contentHeader.substringBefore("\n"))
-        val status = parseStatus(contentHeader.substringBefore("\n"))
-        val contentType = parseContentType(contentHeader)
-        val contentLength = parseContentLength(contentHeader)
-        var httpUrl = parseHttpUrl(contentHeader)
+            var result: Any = ""
+            val code = parseCode(contentHeader.substringBefore("\n"))
+            val status = parseStatus(contentHeader.substringBefore("\n"))
+            val contentType = parseContentType(contentHeader)
+            val contentLength = parseContentLength(contentHeader)
+            var httpUrl = parseHttpUrl(contentHeader)
 
 
-        if ("${httpUrl?.host}/${httpUrl?.url}" in _visitedLink) {
-            httpUrl = null
-        }
+            if ("${httpUrl?.host}/${httpUrl?.url}" in _visitedLink) {
+                httpUrl = null
+            }
 
-        _visitedLink.add("${httpUrl?.host}/${httpUrl?.url}")
+            _visitedLink.add("${httpUrl?.host}/${httpUrl?.url}")
 
-        if (httpUrl != null) {
-            val socket = Socket(httpUrl.host, 80)
+            if (httpUrl != null) {
+                val socket = Socket(httpUrl.host, 80)
 
-            val bufferedReader = DataInputStream(socket.getInputStream())
-            val bufferOut = BufferedOutputStream(socket.getOutputStream())
-            val request = "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
-                    "Host: ${httpUrl.host}\r\n" +
-                    "User-Agent: KosimCLI/2.0\r\n" +
-                    "Cache-Control: no-cache\r\n\r\n"
+                val bufferedReader = DataInputStream(socket.getInputStream())
+                val bufferOut = BufferedOutputStream(socket.getOutputStream())
+                val request = "${httpUrl.method} /${httpUrl.url} HTTP/1.1\r\n" +
+                        "Host: ${httpUrl.host}\r\n" +
+                        "User-Agent: KosimCLI/2.0\r\n" +
+                        "Cache-Control: no-cache\r\n\r\n"
 
-            println("redirecting to ${httpUrl.protocol}://${httpUrl.host}/${httpUrl.url}\n\n")
-            bufferOut.write(request.toByteArray())
-            bufferOut.flush()
+                println("redirecting to ${httpUrl.protocol}://${httpUrl.host}/${httpUrl.url}\n\n")
+                bufferOut.write(request.toByteArray())
+                bufferOut.flush()
 
-            val header = parseHeader(bufferedReader)
-            socket.close()
-            return header
-        } else {
-            if(code in 200..299) {
-                when {
-                    contentType.contains("html") ||
-                    contentType.contains("text") -> {
-                        result = parseContent<HttpContent>(
-                            buffer,
-                            contentType,
-                            contentLength)
+                val header = parseHeader(bufferedReader)
+                socket.close()
+                return header
+            } else {
+                if(code in 200..299) {
+                    when {
+                        contentType.contains("html") ||
+                                contentType.contains("text") -> {
+                            result = parseContent<HttpContent>(
+                                buffer,
+                                contentType,
+                                contentLength)
 //                        result = response
-                    }
-                    else -> {
-                        result = parseContent<File>(
-                            buffer = buffer,
-                            contentType = contentType,
-                            contentLength = contentLength,
-                            host = host,
-                            fileUrl = fileUrl)
+                        }
+                        else -> {
+                            result = parseContent<File>(
+                                buffer = buffer,
+                                contentType = contentType,
+                                contentLength = contentLength,
+                                host = host,
+                                fileUrl = fileUrl)
+                        }
                     }
                 }
-            }
 //            println(response)
-            return HttpResult(
-                code = code,
-                status = status,
-                contentType = contentType,
-                contentLength = contentLength,
-                contentHeader = contentHeader,
-                content = result,
-                basicAuth = basicAuth)
+                return HttpResult(
+                    code = code,
+                    status = status,
+                    contentType = contentType,
+                    contentLength = contentLength,
+                    contentHeader = contentHeader,
+                    content = result,
+                    basicAuth = basicAuth)
+            }
+        } catch (e: Exception) {
+            return HttpResult(404, "The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. Unlike 401 Unauthorized, the client's identity is known to the server.")
         }
+
     }
 
     private fun parseCode(header: String): Int {

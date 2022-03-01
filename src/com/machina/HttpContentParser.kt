@@ -5,6 +5,7 @@ import java.util.regex.Pattern
 object HttpContentParser {
 
     fun parseBody(httpContent: String): HttpContent {
+        println("Parsing text/html content. . .\n\n")
         val content = removeScript(httpContent)
         var processedContent = removeEntities(removeComment(removeLink(content)))
 
