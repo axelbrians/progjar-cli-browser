@@ -1,1 +1,2 @@
-out/production/*
+/out/*
+/src/com/machina/Test.kt
