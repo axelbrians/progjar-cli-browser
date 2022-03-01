@@ -21,7 +21,12 @@ class FileDownloader {
     ): File {
         try {
             val fileExtension = getFileExtensionFromMimeType(contentType)
-            val file = File(DOWNLOAD_DIR, "$fileName.$fileExtension")
+            val downloadDir = File(HOME_DIR, "Downloads").also {
+                if (!it.exists()) {
+                    it.mkdir()
+                }
+            }
+            val file = File(downloadDir, "$fileName.$fileExtension")
             val fos = file.outputStream()
 
             val byteArraySize = 1024 * 10
@@ -50,7 +55,7 @@ class FileDownloader {
 
             return file
         } catch (e: Exception) {
-            return File(DOWNLOAD_DIR)
+            return File(HOME_DIR)
         }
     }
 
@@ -72,8 +77,12 @@ class FileDownloader {
         val coroutineScope = CoroutineScope(Dispatchers.Default)
         val jobs = mutableListOf<Job>()
         val fileExtension = FileDownloader().getFileExtensionFromMimeType(contentType)
-
-        val file = File(DOWNLOAD_DIR, "$fileName.$fileExtension").also {
+        val downloadDir = File(HOME_DIR, "Downloads").also {
+            if (!it.exists()) {
+                it.mkdir()
+            }
+        }
+        val file = File(downloadDir, "$fileName.$fileExtension").also {
             if (!it.exists()) {
                 it.createNewFile()
             }
@@ -266,7 +275,7 @@ class FileDownloader {
     }
 
     companion object {
-        private const val DOWNLOAD_DIR = "C:\\Users\\Pegipegi\\Downloads"
+        private val HOME_DIR = System.getProperty("user.home", "C:")
     }
 
 }

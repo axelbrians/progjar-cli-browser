@@ -122,17 +122,18 @@ fun main() {
 //            println("Code: $code")
 //            println("Status: $status")
 //            println("Content Type: $contentType")
-
-            if (content is File) {
-                println("File detected, opening with default application. . .")
-                Desktop.getDesktop().open(content)
-            }
-            else if(content is HttpContent) {
-                println(content.title)
-                println(content.text)
-            }
-            else {
-                println(content)
+            when (content) {
+                is File -> {
+                    println("File detected, opening with default application. . .")
+                    Desktop.getDesktop().open(content)
+                }
+                is HttpContent -> {
+                    println(content.title)
+                    println(content.text)
+                }
+                else -> {
+                    println(content)
+                }
             }
 
             println("- - - - - - - - - -\n")
